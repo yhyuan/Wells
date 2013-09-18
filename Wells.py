@@ -36,6 +36,7 @@ cursor.execute("select * from VW_GMAP_HTML_04")
 text_file = open("VW_GMAP_HTML_04.txt", "w")
 #text_file.write("\t".join(["BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]) + "\n")  # , "X", "Y", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED"
 text_file.write("\t".join(["WELL_ID", "Longitude", "Latitude", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED", "BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]) + "\n")  # , "X", "Y", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED"	
+print "\t".join(["WELL_ID", "Longitude", "Latitude", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED", "BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"])
 while True:
 	row = cursor.fetchone()
 	if not row:
@@ -45,15 +46,21 @@ while True:
 	#	if len(items[12]) != 0:
 	#		print str(row[1]) + ", " + row[27]
 	rowstr = map(toSting, row)
+	isLargerthan255Character = False
 	for i in range(len(rowstr)):
 		if(len(rowstr[i]) > 255):
-			print rowstr[0] + "\t" + str(i)
+			isLargerthan255Character = True #print rowstr[0] + "\t" + str(i)
 			if not (i in lengthLargerthan255Dict):
 				lengthLargerthan255Dict[i] = 0
 	line = "\t".join(rowstr)
 	while "\r\n" in line:
 		line = line.replace("\r\n", "")
 	line = "\t".join(map(toSting, wellsDict[row[0]])) + "\t" + line
+	if isLargerthan255Character:
+		print rowstr[0] + "\t" + rowstr[20] + "\t" + rowstr[21] + "\t" + rowstr[28]
 	text_file.write(line + "\n")
 text_file.close()
-print lengthLargerthan255Dict
+#print lengthLargerthan255Dict
+# Since ArcGIS can not open the text file with text field which is longer than 255 characters, the following steps are required. 
+# 1. Create a table in Oracle with following SQL: CREATE TABLE wells_data ( BORE_HOLE_ID int, GEO varchar2(4000), PLUG varchar2(4000), PTD varchar2(4000));
+# 2. Use SQL loader to load the advisory.txt to Oracle. sqlldr username/password@sde control=1.ctl, log=1.log, bad=1.bad

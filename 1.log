@@ -1,0 +1,55 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Wed Sep 18 13:29:29 2013
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   1.ctl
+Data File:      1.txt
+  Bad File:     1.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 0
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table WELLS_DATA, loaded from every logical record.
+Insert option in effect for this table: APPEND
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+BORE_HOLE_ID                        FIRST     *  WHT      CHARACTER            
+GEO                                  NEXT  4000  WHT      CHARACTER            
+PLUG                                 NEXT  4000  WHT      CHARACTER            
+PTD                                  NEXT  4000  WHT      CHARACTER            
+
+value used for ROWS parameter changed from 64 to 20
+Record 1: Rejected - Error on table WELLS_DATA, column BORE_HOLE_ID.
+ORA-01722: invalid number
+
+
+Table WELLS_DATA:
+  20861 Rows successfully loaded.
+  1 Row not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 245280 bytes(20 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          0
+Total logical records read:         20862
+Total logical records rejected:         1
+Total logical records discarded:        0
+
+Run began on Wed Sep 18 13:29:29 2013
+Run ended on Wed Sep 18 13:29:32 2013
+
+Elapsed time was:     00:00:03.22
+CPU time was:         00:00:00.28
