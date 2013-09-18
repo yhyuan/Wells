@@ -13,7 +13,7 @@ sys.setdefaultencoding("latin-1")
 import pyodbc
 cnxn = pyodbc.connect('DSN=Wells')
 cursor = cnxn.cursor()
-cursor.execute("select * from VW_GMAP_LL_04 where BORE_HOLE_ID = 1000055771")
+cursor.execute("select * from VW_GMAP_LL_04")
 text_file = open("VW_GMAP_LL_04.txt", "w")
 #text_file.write("BORE_HOLE_ID\tWELL_ID\tLongitude\tLatitude\tBHK\tPREV_WELL_ID\tDPBR_M\tWELL_TYPE\tDEPTH_M\tYEAR_COMPLETED\n")
 #text_file.write("\t".join(["BORE_HOLE_ID", "WELL_ID", "Longitude", "Latitude", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY"]) + "\n")
@@ -22,24 +22,38 @@ def toSting(item):
 	if not item:
 		return " "
 	return str(item)
-	
+wellsDict = {};
 while True:
 	row = cursor.fetchone()
 	if not row:
 		break
+	wellsDict[row[0]] = row[1:10]
 	text_file.write("\t".join(map(toSting, row[:10])) + "\n")
 text_file.close()
 
+lengthLargerthan255Dict = {}  # {28: 0, 20: 0, 21: 0}
 cursor.execute("select * from VW_GMAP_HTML_04")
 text_file = open("VW_GMAP_HTML_04.txt", "w")
-text_file.write("\t".join(["BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]) + "\n")  # , "X", "Y", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED"
-	
+#text_file.write("\t".join(["BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]) + "\n")  # , "X", "Y", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED"
+text_file.write("\t".join(["WELL_ID", "Longitude", "Latitude", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED", "BORE_HOLE_ID", "WELL_ID", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]) + "\n")  # , "X", "Y", "BHK", "PREV_WELL_ID", "DPBR_M", "WELL_TYPE", "DEPTH_M", "YEAR_COMPLETED"	
 while True:
 	row = cursor.fetchone()
 	if not row:
 		break
-	line = "\t".join(map(toSting, row))
+	#if (not (not row[27])):
+	#	items = row[27].strip().split(";");
+	#	if len(items[12]) != 0:
+	#		print str(row[1]) + ", " + row[27]
+	rowstr = map(toSting, row)
+	for i in range(len(rowstr)):
+		if(len(rowstr[i]) > 255):
+			print rowstr[0] + "\t" + str(i)
+			if not (i in lengthLargerthan255Dict):
+				lengthLargerthan255Dict[i] = 0
+	line = "\t".join(rowstr)
 	while "\r\n" in line:
 		line = line.replace("\r\n", "")
+	line = "\t".join(map(toSting, wellsDict[row[0]])) + "\t" + line
 	text_file.write(line + "\n")
 text_file.close()
+print lengthLargerthan255Dict
