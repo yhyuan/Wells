@@ -3,3 +3,6 @@
 *.xls
 *.txt
 *.ldb
+Wells.gdb/
+input/
+output/
