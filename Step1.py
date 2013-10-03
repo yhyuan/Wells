@@ -6,7 +6,7 @@
 # Output data: 
 #		A zip file contains a file geodatabases named Wells, Wells.mxs, Wells.msd, readme.txt
 
-import sys, string, os, time
+import sys, string, os, time, zipfile
 import arcpy
 reload(sys)
 sys.setdefaultencoding("latin-1")
@@ -52,7 +52,7 @@ arcpy.AddField_management(Wells, "URL_FR", "TEXT", "", "", "", "", "NULLABLE", "
 print "Load data to Wells feature class"
 cnxn = pyodbc.connect('DSN=Wells')
 cursor = cnxn.cursor()
-cursor.execute("select X,Y,BORE_HOLE_ID,WELL_ID,DEPTH_M,YEAR_COMPLETED,WELL_COMPLETED_DATE,AUDIT_NO,TAG,CONTRACTOR, BHK from VW_GMAP_LL_04" + WHERE)
+cursor.execute("select X,Y,BORE_HOLE_ID,WELL_ID,DEPTH_M,YEAR_COMPLETED,WELL_COMPLETED_DATE,AUDIT_NO,TAG,CONTRACTOR, BHK from WWIS_OWNER_VW_GMAP_LL_04" + WHERE)
 rows = cursor.fetchall()
 wellsDict = {};
 try:
@@ -77,7 +77,7 @@ def toSting(item):
 	#	itemStr = itemStr.replace("\r\n", "")		
 	return itemStr
 
-cursor.execute("select BORE_HOLE_ID, WELL_ID, WELL_COMPLETED_DATE, RECEIVED_DATE, AUDIT_NO, TAG, CONTRACTOR, SWL, FINAL_STATUS_DESCR, USE1, USE2, MOE_COUNTY_DESCR, MOE_MUNICIPALITY_DESCR, CON, LOT, STREET, CITY, UTMZONE, EAST83, NORTH83, GEO, PLUG, HOLE, CM, CAS, SCRN, WAT, PT, PTD, DISINFECTED from VW_GMAP_HTML_04"  + WHERE)
+cursor.execute("select BORE_HOLE_ID, WELL_ID, WELL_COMPLETED_DATE, RECEIVED_DATE, AUDIT_NO, TAG, CONTRACTOR, SWL, FINAL_STATUS_DESCR, USE1, USE2, MOE_COUNTY_DESCR, MOE_MUNICIPALITY_DESCR, CON, LOT, STREET, CITY, UTMZONE, EAST83, NORTH83, GEO, PLUG, HOLE, CM, CAS, SCRN, WAT, PT, PTD, DISINFECTED from WWIS_OWNER_VW_GMAP_HTML_04"  + WHERE)
 rows = cursor.fetchall()
 
 f = open ("rows_contaion_enter.txt","w")
@@ -184,5 +184,80 @@ if (cntr == len(rows)):
 else:
 	print "WellsReport2 is NOT created successfully!"
 
+'''
+print "Calculate the fields from WellsReport1"
+WellsReport0 = "WellsReport0"
+fields = ["MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83"]
+for field in fields:
+	arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, field, "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+print "Make Layer for WellsReport0"
+arcpy.MakeFeatureLayer_management(arcpy.env.workspace + "\\"  + WellsReport0, WellsReport0 + "_Layer1", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;BORE_HOLE_ID BORE_HOLE_ID VISIBLE NONE;WELL_ID WELL_ID VISIBLE NONE;BHK BHK VISIBLE NONE;WELL_COMPLETED_DATE WELL_COMPLETED_DATE VISIBLE NONE;RECEIVED_DATE RECEIVED_DATE VISIBLE NONE;AUDIT_NO AUDIT_NO VISIBLE NONE;TAG TAG VISIBLE NONE;CONTRACTOR CONTRACTOR VISIBLE NONE;SWL SWL VISIBLE NONE;FINAL_STATUS_DESCR FINAL_STATUS_DESCR VISIBLE NONE;USE1 USE1 VISIBLE NONE;USE2 USE2 VISIBLE NONE;MOE_COUNTY_DESCR MOE_COUNTY_DESCR VISIBLE NONE;MOE_MUNICIPALITY_DESCR MOE_MUNICIPALITY_DESCR VISIBLE NONE;CON CON VISIBLE NONE;LOT LOT VISIBLE NONE;STREET STREET VISIBLE NONE;CITY CITY VISIBLE NONE;UTMZONE UTMZONE VISIBLE NONE;EAST83 EAST83 VISIBLE NONE;NORTH83 NORTH83 VISIBLE NONE;")
+print "Make Layer for WellsReport1"
+arcpy.MakeFeatureLayer_management(arcpy.env.workspace + "\\"  + WellsReport1, WellsReport1 + "_Layer1", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;BORE_HOLE_ID BORE_HOLE_ID VISIBLE NONE;MOE_COUNTY_DESCR MOE_COUNTY_DESCR VISIBLE NONE;MOE_MUNICIPALITY_DESCR MOE_MUNICIPALITY_DESCR VISIBLE NONE;CON CON VISIBLE NONE;LOT LOT VISIBLE NONE;STREET STREET VISIBLE NONE;CITY CITY VISIBLE NONE;UTMZONE UTMZONE VISIBLE NONE;EAST83 EAST83 VISIBLE NONE;NORTH83 NORTH83 VISIBLE NONE")
+print "Add Join between WellsReport0 and WellsReport1"
+arcpy.AddJoin_management(WellsReport0 + "_Layer1", "BORE_HOLE_ID", WellsReport1 + "_Layer1", "BORE_HOLE_ID", "KEEP_ALL")
+print "Start Calculating fields"
+for field in fields:
+	print "Calculate field: " + field
+	arcpy.CalculateField_management(WellsReport0 + "_Layer1", WellsReport0 + "." + field, "[" + WellsReport1 + "." + field + "]", "VB", "")
+arcpy.RemoveJoin_management(WellsReport0 + "_Layer", "")
+
+print "Calculate the fields from WellsReport2"
+arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, "GEO", "TEXT", "", "", "3000", "", "NULLABLE", "NON_REQUIRED", "")
+arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, "PLUG", "TEXT", "", "", "1000", "", "NULLABLE", "NON_REQUIRED", "")
+fields = ["HOLE", "CM", "CAS", "SCRN", "WAT", "PT"]
+for field in fields:
+	print "Calculate field: " + field
+	arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, field, "TEXT", "", "", "300", "", "NULLABLE", "NON_REQUIRED", "")
+arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, "PTD", "TEXT", "", "", "500", "", "NULLABLE", "NON_REQUIRED", "")
+arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport0, "DISINFECTED", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+arcpy.MakeFeatureLayer_management(arcpy.env.workspace + "\\"  + WellsReport2, WellsReport2 + "_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;BORE_HOLE_ID BORE_HOLE_ID VISIBLE NONE;GEO GEO VISIBLE NONE;PLUG PLUG VISIBLE NONE;HOLE HOLE VISIBLE NONE;CM CM VISIBLE NONE;CAS CAS VISIBLE NONE;SCRN SCRN VISIBLE NONE;WAT WAT VISIBLE NONE;PT PT VISIBLE NONE;PTD PTD VISIBLE NONE;DISINFECTED DISINFECTED VISIBLE NONE")
+arcpy.AddJoin_management(WellsReport0 + "_Layer", "BORE_HOLE_ID", WellsReport2 + "_Layer", "BORE_HOLE_ID", "KEEP_ALL")
+fields = ["GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED"]
+for field in fields:
+	arcpy.CalculateField_management(WellsReport0 + "_Layer", WellsReport0 + "." + field, "[" + WellsReport2 + "." + field + "]", "VB", "")
+arcpy.RemoveJoin_management(WellsReport0 + "_Layer", "")
+
+arcpy.Delete_management( arcpy.env.workspace + "\\WellsReport1" , "FeatureClass")
+arcpy.Delete_management( arcpy.env.workspace + "\\WellsReport2" , "FeatureClass")
+#arcpy.DeleteField_management(arcpy.env.workspace + "\\WellsReport0", "OBJECTID_1;BORE_HOLE_ID_1;OBJECTID_12;BORE_HOLE_ID_12")
+
+arcpy.Project_management(arcpy.env.workspace + "\\WellsReport0", arcpy.env.workspace + "\\WellsMore", "PROJCS['WGS_1984_Web_Mercator_Auxiliary_Sphere',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Mercator_Auxiliary_Sphere'],PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',0.0],PARAMETER['Standard_Parallel_1',0.0],PARAMETER['Auxiliary_Sphere_Type',0.0],UNIT['Meter',1.0]]", "NAD_1983_To_WGS_1984_5", "GEOGCS['GCS_North_American_1983',DATUM['D_North_American_1983',SPHEROID['GRS_1980',6378137.0,298.257222101]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]")
+arcpy.Project_management(arcpy.env.workspace + "\\" + WellsPoints, arcpy.env.workspace + "\\WellsBasic", "PROJCS['WGS_1984_Web_Mercator_Auxiliary_Sphere',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Mercator_Auxiliary_Sphere'],PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',0.0],PARAMETER['Standard_Parallel_1',0.0],PARAMETER['Auxiliary_Sphere_Type',0.0],UNIT['Meter',1.0]]", "NAD_1983_To_WGS_1984_5", "GEOGCS['GCS_North_American_1983',DATUM['D_North_American_1983',SPHEROID['GRS_1980',6378137.0,298.257222101]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]")
+arcpy.Delete_management(arcpy.env.workspace + "\\WellsReport0", "FeatureClass")
+arcpy.Delete_management(arcpy.env.workspace + "\\" + WellsPoints, "FeatureClass")
+
+print "Copy mxd, msd and create readme file"
+# Prepare the msd, mxd, and readme.txt
+os.system("copy " + INPUT_PATH + "\\Wells.msd " + OUTPUT_PATH)
+os.system("copy " + INPUT_PATH + "\\Wells.mxd " + OUTPUT_PATH)
+f = open (INPUT_PATH + "\\readme_Wells.txt","r")
+data = f.read()
+f.close()
+#import time
+dateString = time.strftime("%Y/%m/%d", time.localtime())
+data = data.replace("[DATE]", dateString)
+f = open (OUTPUT_PATH + "\\readme_Wells.txt","w")
+f.write(data)
+f.close()
+
+
+print "Compress and create Wells.zip file"
+# Compress the files together into a zip file
+#from zipfile_infolist import print_info
+target_dir = OUTPUT_PATH + '\\Wells.gdb'
+zip = zipfile.ZipFile(OUTPUT_PATH + '\\Wells.zip', 'w', zipfile.ZIP_DEFLATED)
+rootlen = len(target_dir) + 1
+for base, dirs, files in os.walk(target_dir):
+	for file in files:
+		#print file[-4:]
+		fn = os.path.join(base, file)
+		#if file[-4:] != "lock":
+		zip.write(fn, "Wells.gdb\\" + fn[rootlen:])
+zip.write(OUTPUT_PATH + '\\Wells.msd', "Wells.msd")
+zip.write(OUTPUT_PATH + '\\Wells.mxd', "Wells.mxd")
+zip.write(OUTPUT_PATH + '\\readme_Wells.txt', "readme_Wells.txt")
+zip.close()
+'''
 elapsed_time = time.time() - start_time
 print elapsed_time
