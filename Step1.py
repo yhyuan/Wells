@@ -1,4 +1,5 @@
-# Required packages: arcpy from ArcGIS 10.1 and pyodbc from https://code.google.com/p/pyodbc/
+# Required packages: arcpy from ArcGIS 10.1 and pyodbc from https://code.google.com/p/pyodbc/. 
+# visit https://code.google.com/p/pyodbc/downloads/list and download pyodbc-3.0.7.win32-py2.7.exe
 # Input data: An Access database contains two tables: VW_GMAP_LL_04 and VW_GMAP_HTML_04. 
 #		Fields in VW_GMAP_LL_04 LL_FieldsDict = {"BORE_HOLE_ID": 0, "WELL_ID": 1, "X": 2, "Y": 3, "BHK": 4, "PREV_WELL_ID": 5, "DPBR_M": 6, "WELL_TYPE": 7, "DEPTH_M": 8, "YEAR_COMPLETED": 9, "WELL_COMPLETED_DATE": 10, "RECEIVED_DATE": 11, "AUDIT_NO": 12, "TAG": 13, "CONTRACTOR": 14, "SWL": 15, "FINAL_STATUS_DESCR": 16, "USE1": 17, "USE2": 18, "MOE_COUNTY_DESCR": 19, "MOE_MUNICIPALITY_DESCR": 20, "CON": 21, "LOT": 22, "STREET": 23, "CITY": 24}
 #		Fields in VW_GMAP_HTML_04 HT_FieldsDict = {"BORE_HOLE_ID": 0, "WELL_ID": 1, "WELL_COMPLETED_DATE": 2, "RECEIVED_DATE": 3, "AUDIT_NO": 4, "TAG": 5, "CONTRACTOR": 6, "SWL": 7, "FINAL_STATUS_DESCR": 8, "USE1": 9, "USE2": 10, "MOE_COUNTY_DESCR": 11, "MOE_MUNICIPALITY_DESCR": 12, "CON": 13, "LOT": 14, "STREET": 15, "CITY": 16, "UTMZONE": 17, "EAST83": 18, "NORTH83": 19, "GEO": 20, "PLUG": 21, "HOLE": 22, "CM": 23, "CAS": 24, "SCRN": 25, "WAT": 26, "PT": 27, "PTD": 28, "DISINFECTED": 29}
@@ -43,8 +44,8 @@ arcpy.AddField_management(Wells, "WELL_COMPLETED_DATE", "TEXT", "", "", "", "", 
 arcpy.AddField_management(Wells, "AUDIT_NO", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(Wells, "TAG_NO", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(Wells, "CONTRACTOR", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-arcpy.AddField_management(Wells, "URL_EN", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-arcpy.AddField_management(Wells, "URL_FR", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+#arcpy.AddField_management(Wells, "URL_EN", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+#arcpy.AddField_management(Wells, "URL_FR", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 #else:
 #	arcpy.DeleteRows_management(Wells)
 	
@@ -52,15 +53,21 @@ arcpy.AddField_management(Wells, "URL_FR", "TEXT", "", "", "", "", "NULLABLE", "
 print "Load data to Wells feature class"
 cnxn = pyodbc.connect('DSN=Wells')
 cursor = cnxn.cursor()
+print "Start to load WWIS_OWNER_VW_GMAP_LL_04"
 cursor.execute("select X,Y,BORE_HOLE_ID,WELL_ID,DEPTH_M,YEAR_COMPLETED,WELL_COMPLETED_DATE,AUDIT_NO,TAG,CONTRACTOR, BHK from WWIS_OWNER_VW_GMAP_LL_04" + WHERE)
 rows = cursor.fetchall()
-wellsDict = {};
+print "WWIS_OWNER_VW_GMAP_LL_04 is loaded successfully"
+#wellsDict = {};
+BHKwellsDict = {};
 try:
-	with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR", "URL_EN", "URL_FR")) as cur:
+	#with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR", "URL_EN", "URL_FR")) as cur:
+	with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR")) as cur:
 		cntr = 1
 		for row in rows:
-			wellsDict[row[2]] = row  # use BORE_HOLE_ID (row[2]) as unique key
-			rowValue = [(row[0], row[1]), row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], "", ""]
+			#wellsDict[row[2]] = row  # use BORE_HOLE_ID (row[2]) as unique key
+			BHKwellsDict[row[2]] = row[10]  # use BORE_HOLE_ID (row[2]) as unique key
+			#rowValue = [(row[0], row[1]), row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], "", ""]
+			rowValue = [(row[0], row[1]), row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]]
 			cur.insertRow(rowValue)
 			#print "Record number " + str(cntr) + " was written to feature class " + WellsPoints
 			cntr = cntr + 1
@@ -77,15 +84,21 @@ def toSting(item):
 	#	itemStr = itemStr.replace("\r\n", "")		
 	return itemStr
 
+print "Start to load WWIS_OWNER_VW_GMAP_HTML_04"
 cursor.execute("select BORE_HOLE_ID, WELL_ID, WELL_COMPLETED_DATE, RECEIVED_DATE, AUDIT_NO, TAG, CONTRACTOR, SWL, FINAL_STATUS_DESCR, USE1, USE2, MOE_COUNTY_DESCR, MOE_MUNICIPALITY_DESCR, CON, LOT, STREET, CITY, UTMZONE, EAST83, NORTH83, GEO, PLUG, HOLE, CM, CAS, SCRN, WAT, PT, PTD, DISINFECTED from WWIS_OWNER_VW_GMAP_HTML_04"  + WHERE)
-rows = cursor.fetchall()
-
+#rows = cursor.fetchall()
 f = open ("rows_contaion_enter.txt","w")
-f.write(str(len(rows)) + "\n")
-for row in rows:
+count = 0
+while 1:
+	row = cursor.fetchone()
+	if not row:
+		break
 	line = "\t".join(map(toSting, row))
+	count = count + 1
 	if ("\r\n" in line):
-		f.write(line + "\n")	
+		f.write(line + "\n")		
+print "WWIS_OWNER_VW_GMAP_HTML_04 is loaded successfully"
+f.write(str(count) + "\n")
 f.close()
 
 print "Create WellsReport0 feature class"
@@ -107,24 +120,27 @@ for field in fields:
 arcpy.AddField_management(WellsReportsLayer, "PTD", "TEXT", "", "", "500", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(WellsReportsLayer, "DISINFECTED", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 '''	
-
+cursor.execute("select BORE_HOLE_ID, WELL_ID, WELL_COMPLETED_DATE, RECEIVED_DATE, AUDIT_NO, TAG, CONTRACTOR, SWL, FINAL_STATUS_DESCR, USE1, USE2 from WWIS_OWNER_VW_GMAP_HTML_04"  + WHERE)
+rows = cursor.fetchall()
 cntr = 0
 try:
 	#with arcpy.da.InsertCursor(WellsReports, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "BHK", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED")) as cur:
 	with arcpy.da.InsertCursor(WellsReports, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "BHK", "WELL_COMPLETED_DATE", "RECEIVED_DATE", "AUDIT_NO", "TAG", "CONTRACTOR", "SWL", "FINAL_STATUS_DESCR", "USE1", "USE2")) as cur:
 		for row in rows:
-			bRow = wellsDict[row[0]]  # use BORE_HOLE_ID (row[0]) as unique key
+			#bRow = wellsDict[row[0]]  # use BORE_HOLE_ID (row[0]) as unique key
+			BHK = BHKwellsDict[row[0]]
 			row = map(toSting, row)			
 			#rowValue = [(0, 0), row[0], row[1], " ", row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15], row[16], row[17], row[18], row[19], row[20], row[21], row[22], row[23], row[24], row[25], row[26], row[27], row[28], row[29]]
 			#rowValue = [(bRow[0], bRow[1]), row[0], row[1], bRow[10], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15], row[16], row[17], row[18], row[19], row[20], row[21], row[22], row[23], row[24], row[25], row[26], row[27], row[28], row[29]]
 			#print rowValue
-			rowValue = [(bRow[0], bRow[1]), row[0], row[1], bRow[10], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]]
+			#rowValue = [(bRow[0], bRow[1]), row[0], row[1], bRow[10], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]]
+			rowValue = [(0, 0), row[0], row[1], BHK, row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]]
 			cur.insertRow(rowValue)
 			cntr = cntr + 1
 except Exception as e:
 	print e.message
 
-if (cntr == len(rows)):
+if (cntr == count):
 	print "WellsReport0 is created successfully!"
 else:
 	print "WellsReport0 is NOT created successfully!"
@@ -138,18 +154,22 @@ arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport1, "BORE_HOLE
 fields = ["MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83"]
 for field in fields:
 	arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport1, field, "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+	
+cursor.execute("select BORE_HOLE_ID, MOE_COUNTY_DESCR, MOE_MUNICIPALITY_DESCR, CON, LOT, STREET, CITY, UTMZONE, EAST83, NORTH83 from WWIS_OWNER_VW_GMAP_HTML_04"  + WHERE)
+rows = cursor.fetchall()
+
 cntr = 0
 try:
 	with arcpy.da.InsertCursor(WellsReport1, ("SHAPE@XY", "BORE_HOLE_ID", "MOE_COUNTY_DESCR", "MOE_MUNICIPALITY_DESCR", "CON", "LOT", "STREET", "CITY", "UTMZONE", "EAST83", "NORTH83")) as cur:
 		for row in rows:
 			row = map(toSting, row)			
-			rowValue = [(0, 0), row[0], row[11], row[12], row[13], row[14], row[15], row[16], row[17], row[18], row[19]]
+			rowValue = [(0, 0), row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]]
 			cur.insertRow(rowValue)
 			cntr = cntr + 1
 except Exception as e:
 	print e.message
 
-if (cntr == len(rows)):
+if (cntr == count):
 	print "WellsReport1 is created successfully!"
 else:
 	print "WellsReport1 is NOT created successfully!"
@@ -168,18 +188,22 @@ for field in fields:
 	arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport2, field, "TEXT", "", "", "300", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport2, "PTD", "TEXT", "", "", "500", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(arcpy.env.workspace + "\\"  + WellsReport2, "DISINFECTED", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+
+cursor.execute("select BORE_HOLE_ID, GEO, PLUG, HOLE, CM, CAS, SCRN, WAT, PT, PTD, DISINFECTED from WWIS_OWNER_VW_GMAP_HTML_04"  + WHERE)
+rows = cursor.fetchall()
+
 cntr = 0
 try:
 	with arcpy.da.InsertCursor(WellsReport2, ("SHAPE@XY", "BORE_HOLE_ID", "GEO", "PLUG", "HOLE", "CM", "CAS", "SCRN", "WAT", "PT", "PTD", "DISINFECTED")) as cur:
 		for row in rows:
 			row = map(toSting, row)			
-			rowValue = [(0, 0), row[0], row[20], row[21], row[22], row[23], row[24], row[25], row[26], row[27], row[28], row[29]]
+			rowValue = [(0, 0), row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]]
 			cur.insertRow(rowValue)
 			cntr = cntr + 1
 except Exception as e:
 	print e.message
 
-if (cntr == len(rows)):
+if (cntr == count):
 	print "WellsReport2 is created successfully!"
 else:
 	print "WellsReport2 is NOT created successfully!"
