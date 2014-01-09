@@ -53,6 +53,18 @@ arcpy.Project_management(arcpy.env.workspace + "\\" + WellsPoints, arcpy.env.wor
 arcpy.Delete_management(arcpy.env.workspace + "\\WellsReports", "FeatureClass")
 arcpy.Delete_management(arcpy.env.workspace + "\\" + WellsPoints, "FeatureClass")
 
+# Process: Add Attribute Index
+arcpy.AddIndex_management(arcpy.env.workspace + "\\WellsBasic", "BORE_HOLE_ID", "BORE_HOLE_ID_idx", "UNIQUE", "NON_ASCENDING")
+
+# Process: Add Attribute Index (2)
+arcpy.AddIndex_management(arcpy.env.workspace + "\\WellsBasic", "WELL_ID", "WELL_ID", "NON_UNIQUE", "NON_ASCENDING")
+
+# Process: Add Attribute Index (3)
+arcpy.AddIndex_management(arcpy.env.workspace + "\\WellsMore", "BORE_HOLE_ID", "BORE_HOLE_ID_IDX", "UNIQUE", "NON_ASCENDING")
+
+# Process: Add Attribute Index (4)
+arcpy.AddIndex_management(arcpy.env.workspace + "\\WellsMore", "WELL_ID", "WELL_ID_IDX", "NON_UNIQUE", "NON_ASCENDING")
+
 print "Copy mxd, msd and create readme file"
 # Prepare the msd, mxd, and readme.txt
 os.system("copy " + INPUT_PATH + "\\Wells.msd " + OUTPUT_PATH)
