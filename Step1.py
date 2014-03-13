@@ -44,11 +44,12 @@ arcpy.AddField_management(Wells, "WELL_COMPLETED_DATE", "TEXT", "", "", "", "", 
 arcpy.AddField_management(Wells, "AUDIT_NO", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(Wells, "TAG_NO", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 arcpy.AddField_management(Wells, "CONTRACTOR", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+#arcpy.AddField_management(Wells, "PATH", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+
 #arcpy.AddField_management(Wells, "URL_EN", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 #arcpy.AddField_management(Wells, "URL_FR", "TEXT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 #else:
 #	arcpy.DeleteRows_management(Wells)
-	
 
 print "Load data to Wells feature class"
 cnxn = pyodbc.connect('DSN=Wells')
@@ -61,7 +62,7 @@ print "WWIS_OWNER_VW_GMAP_LL_04 is loaded successfully"
 BHKwellsDict = {};
 try:
 	#with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR", "URL_EN", "URL_FR")) as cur:
-	with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR")) as cur:
+	with arcpy.da.InsertCursor(WellsPoints, ("SHAPE@XY", "BORE_HOLE_ID", "WELL_ID", "DEPTH_M", "YEAR_COMPLETED", "WELL_COMPLETED_DATE", "AUDIT_NO", "TAG_NO", "CONTRACTOR", "PATH")) as cur:
 		cntr = 1
 		for row in rows:
 			#wellsDict[row[2]] = row  # use BORE_HOLE_ID (row[2]) as unique key
